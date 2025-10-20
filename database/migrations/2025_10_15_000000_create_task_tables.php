@@ -16,34 +16,58 @@ return new class extends Migration {
     {
         /*
         |--------------------------------------------------------------------------
+        | Create sTask permission group
+        |--------------------------------------------------------------------------
+        */
+        // Check if sTask permission group exists, create or update
+        $staskGroup = PermissionsGroups::where('name', 'sTask')->first();
+        if (!$staskGroup) {
+            $staskGroup = PermissionsGroups::create([
+                'name' => 'sTask',
+                'lang_key' => 'sTask::global.permissions_group'
+            ]);
+        } else {
+            $staskGroup->update(['lang_key' => 'sTask::global.permissions_group']);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | Create sTask permission
         |--------------------------------------------------------------------------
         */
-        // Use updateOrCreate with explicit ID handling for PostgreSQL
-        $staskGroup = PermissionsGroups::updateOrCreate(
-            ['name' => 'sTask'],
-            ['lang_key' => 'sTask::global.permissions_group']
-        );
-
-        // Use updateOrCreate instead of firstOrCreate to avoid duplicate key issues
-        Permissions::updateOrCreate(
-            ['key' => 'stask'],
-            [
+        $permission = Permissions::where('key', 'stask')->first();
+        if (!$permission) {
+            Permissions::create([
                 'name' => 'Access sTask Interface',
+                'key' => 'stask',
                 'lang_key' => 'sTask::global.permission_access',
                 'group_id' => $staskGroup->id,
                 'createdon' => time(),
                 'editedon' => time(),
-            ]
-        );
+            ]);
+        } else {
+            $permission->update([
+                'name' => 'Access sTask Interface',
+                'lang_key' => 'sTask::global.permission_access',
+                'group_id' => $staskGroup->id,
+                'editedon' => time(),
+            ]);
+        }
 
-        // Use updateOrCreate instead of firstOrCreate
-        RolePermissions::updateOrCreate(
-            [
+        /*
+        |--------------------------------------------------------------------------
+        | Create role permission
+        |--------------------------------------------------------------------------
+        */
+        $rolePermission = RolePermissions::where('role_id', 1)
+            ->where('permission', 'stask')
+            ->first();
+        if (!$rolePermission) {
+            RolePermissions::create([
                 'role_id' => 1,
                 'permission' => 'stask',
-            ]
-        );
+            ]);
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -129,4 +153,3 @@ return new class extends Migration {
         PermissionsGroups::where('name', 'sTask')->delete();
     }
 };
-
